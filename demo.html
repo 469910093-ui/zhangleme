@@ -303,6 +303,22 @@ header{
       <div class="modal-venue-addr" id="mAddr"></div>
     </div>
     <div class="modal-actions" id="mActions"></div>
+    <!-- wx-open-launch-weapp 必须预埋在 DOM，微信不支持动态 innerHTML 注入 -->
+    <wx-open-launch-weapp id="wxLaunchBtn" username="" path="pages/index/index" appid=""
+      style="display:none;width:100%;margin-bottom:10px">
+      <script type="text/wxtag-template">
+        <style>
+          .wx-btn{display:flex;align-items:center;gap:12px;width:100%;background:#1A7A4A;color:#fff;border:none;border-radius:12px;padding:14px 16px;font-size:15px;font-weight:600;cursor:pointer;text-align:left;box-sizing:border-box}
+          .wx-ico{font-size:22px;flex-shrink:0}
+          .wx-label{font-size:15px;font-weight:600}
+          .wx-desc{font-size:12px;opacity:.8;margin-top:2px}
+        </style>
+        <button class="wx-btn">
+          <span class="wx-ico">🚀</span>
+          <div><div class="wx-label" id="wxBtnLabel">打开小程序</div><div class="wx-desc">点击直接跳转</div></div>
+        </button>
+      </script>
+    </wx-open-launch-weapp>
     <button class="modal-close" onclick="closeModal()">取消</button>
   </div>
 </div>
@@ -328,17 +344,17 @@ header{
 //  平台配置
 // ════════════════════════
 const PLT={
-  jushi:    {name:'久事体育',  cls:'p-jushi',    mp:'久事体育智慧场馆',    appId:'wxbd4ec54a9e9ce6dd',path:'pages/index/index'},
-  yundong:  {name:'韵动吧',    cls:'p-yundong',  mp:'韵动吧',              appId:'wxd0286fb3b0e39384',path:'pages/index/index'},
-  quyundong:{name:'趣运动',    cls:'p-quyundong',mp:'趣运动',              appId:'wxbb9c3b35727d8ce8',path:''},
-  gogo:     {name:'勾勾运动',  cls:'p-gogo',     mp:'GoGoSports勾勾运动', appId:'wxa43e880705719304',path:''},
-  jiubo:    {name:'久博',      cls:'p-jiubo',    mp:'久博网球',            appId:'',path:''},
-  tennis:   {name:'网球有约',  cls:'p-tennis',   mp:'网球有约',            appId:'wx734e4a8233d087c4',path:''},
-  duoduo:   {name:'多多动',    cls:'p-duoduo',   mp:'多多动OurPickleball', appId:'wx439221904a29bf7f',path:''},
-  yonex:    {name:'帮帮体育',  cls:'p-yonex',    mp:'YONEX Tennis Lab',   appId:'wx95dfa9688fcbf44f',path:''},
-  padelu:   {name:'PadelU',   cls:'p-padelu',   mp:'PadelU板式网球',       appId:'wx8d767e8e1ffe5f83',path:''},
-  self:     {name:'自营',      cls:'p-self',     mp:'',                    appId:'',path:''},
-  wechat:   {name:'微信群',    cls:'p-wechat',   mp:'',                    appId:'',path:''},
+  jushi:    {name:'久事体育',  cls:'p-jushi',    mp:'久事体育智慧场馆',    gh:'',appId:'wxbd4ec54a9e9ce6dd',path:'pages/index/index'},
+  yundong:  {name:'韵动吧',    cls:'p-yundong',  mp:'韵动吧',              gh:'',appId:'wxd0286fb3b0e39384',path:'pages/index/index'},
+  quyundong:{name:'趣运动',    cls:'p-quyundong',mp:'趣运动',              gh:'',appId:'wxbb9c3b35727d8ce8',path:''},
+  gogo:     {name:'勾勾运动',  cls:'p-gogo',     mp:'GoGoSports勾勾运动', gh:'',appId:'wxa43e880705719304',path:''},
+  jiubo:    {name:'久博',      cls:'p-jiubo',    mp:'久博网球',            gh:'',appId:'',path:''},
+  tennis:   {name:'网球有约',  cls:'p-tennis',   mp:'网球有约',            gh:'',appId:'wx734e4a8233d087c4',path:''},
+  duoduo:   {name:'多多动',    cls:'p-duoduo',   mp:'多多动OurPickleball', gh:'',appId:'wx439221904a29bf7f',path:''},
+  yonex:    {name:'帮帮体育',  cls:'p-yonex',    mp:'YONEX Tennis Lab',   gh:'',appId:'wx95dfa9688fcbf44f',path:''},
+  padelu:   {name:'PadelU',   cls:'p-padelu',   mp:'PadelU板式网球',       gh:'',appId:'wx8d767e8e1ffe5f83',path:''},
+  self:     {name:'自营',      cls:'p-self',     mp:'',                    gh:'',appId:'',path:''},
+  wechat:   {name:'微信群',    cls:'p-wechat',   mp:'',                    gh:'',appId:'',path:''},
 };
 
 // ════════════════════════
@@ -693,7 +709,7 @@ if(isWechat){
     .then(r=>r.json())
     .then(cfg=>{
       wx.config({
-        debug:false,
+        debug:true,
         appId:cfg.appId,
         timestamp:cfg.timestamp,
         nonceStr:cfg.nonceStr,
@@ -716,25 +732,19 @@ function openBooking(id){
   document.getElementById('mName').textContent=curVenue.name;
   document.getElementById('mAddr').textContent='📍 '+curVenue.district+' · '+curVenue.addr;
   let actions='';
+  // wx-open-launch-weapp 必须预埋 DOM，这里只控制显隐和属性
+  const wxBtn=document.getElementById('wxLaunchBtn');
+  wxBtn.style.display='none';
+
   if(curVenue.plt==='wechat'){
     actions+=aHtml('m-primary','💬','加群预约','加入对应微信群后群内抢位',"doAction('group')");
   } else if(p.appId){
     if(isWechat){
-      // 微信内用开放标签直接跳转
-      actions+=`<wx-open-launch-weapp id="launch-btn" username="${p.mp}" path="${p.path||'pages/index/index'}" appid="${p.appId}" style="display:block;width:100%">
-        <script type="text/wxtag-template">
-          <style>
-            .wx-btn{display:flex;align-items:center;gap:12px;width:100%;background:#1A7A4A;color:#fff;border:none;border-radius:12px;padding:14px 16px;font-size:15px;font-weight:600;cursor:pointer;text-align:left}
-            .wx-ico{font-size:22px;flex-shrink:0}
-            .wx-label{font-size:15px;font-weight:600}
-            .wx-desc{font-size:12px;opacity:.8;margin-top:2px}
-          </style>
-          <button class="wx-btn">
-            <span class="wx-ico">🚀</span>
-            <div><div class="wx-label">打开「${p.mp}」</div><div class="wx-desc">点击直接跳转小程序</div></div>
-          </button>
-        <\/script>
-      </wx-open-launch-weapp>`;
+      // 更新预埋节点的属性，然后显示
+      wxBtn.setAttribute('username', p.gh||'');
+      wxBtn.setAttribute('appid', p.appId);
+      wxBtn.setAttribute('path', p.path||'pages/index/index');
+      wxBtn.style.display='block';
     } else {
       actions+=aHtml('m-primary','🚀',`打开「${p.mp}」`,'在微信中打开可直接跳转',"doAction('jump')");
     }

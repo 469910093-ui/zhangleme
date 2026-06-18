@@ -708,6 +708,10 @@ if(isWechat){
   fetch(`/api/wxsign?url=${encodeURIComponent(signUrl)}`)
     .then(r=>r.json())
     .then(cfg=>{
+      if(cfg.error){
+        alert('wxsign error: '+cfg.error);
+        return;
+      }
       wx.config({
         debug:true,
         appId:cfg.appId,
@@ -718,9 +722,9 @@ if(isWechat){
         openTagList:['wx-open-launch-weapp']
       });
       wx.ready(()=>{ wxReady=true; });
-      wx.error(e=>console.warn('wx.config error',e));
+      wx.error(e=>alert('wx.error: '+JSON.stringify(e)));
     })
-    .catch(e=>console.warn('wxsign fetch error',e));
+    .catch(e=>alert('wxsign fetch failed: '+e.message));
 }
 
 function openBooking(id){

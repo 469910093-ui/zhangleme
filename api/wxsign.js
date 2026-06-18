@@ -1,4 +1,4 @@
-// Vercel Serverless Function — 微信 JS-SDK 签名接口
+// Vercel Serverless Function — 微信 JS-SDK 签名接口 (CommonJS)
 const https = require('https');
 const crypto = require('crypto');
 
@@ -15,7 +15,6 @@ function httpsGet(url) {
   });
 }
 
-// 内存缓存 access_token（有效期7200s，提前5分钟刷新）
 let tokenCache = { value: '', expireAt: 0 };
 let ticketCache = { value: '', expireAt: 0 };
 
@@ -45,7 +44,7 @@ function sign(ticket, nonceStr, timestamp, url) {
   return crypto.createHash('sha1').update(str).digest('hex');
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -67,4 +66,4 @@ export default async function handler(req, res) {
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
-}
+};

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>强了么 · 上海网球/匹克球/板式网球</title>
+<script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
 <style>
 :root{
   --green:#1A7A4A;--green2:#52B788;--surface:#F2F5F2;
@@ -684,6 +685,28 @@ function closeTagModal(e){
 let curVenue=null;
 const isWechat=/MicroMessenger/i.test(navigator.userAgent);
 
+// ── 微信 JS-SDK 初始化 ──
+let wxReady=false;
+if(isWechat){
+  const signUrl=location.href.split('#')[0];
+  fetch(`/api/wxsign?url=${encodeURIComponent(signUrl)}`)
+    .then(r=>r.json())
+    .then(cfg=>{
+      wx.config({
+        debug:false,
+        appId:cfg.appId,
+        timestamp:cfg.timestamp,
+        nonceStr:cfg.nonceStr,
+        signature:cfg.signature,
+        jsApiList:['openLocation'],
+        openTagList:['wx-open-launch-weapp']
+      });
+      wx.ready(()=>{ wxReady=true; });
+      wx.error(e=>console.warn('wx.config error',e));
+    })
+    .catch(e=>console.warn('wxsign fetch error',e));
+}
+
 function openBooking(id){
   curVenue=V.find(x=>x.id===id);
   const p=PLT[curVenue.plt];
@@ -696,8 +719,25 @@ function openBooking(id){
   if(curVenue.plt==='wechat'){
     actions+=aHtml('m-primary','💬','加群预约','加入对应微信群后群内抢位',"doAction('group')");
   } else if(p.appId){
-    actions+=aHtml('m-primary','🚀',`打开「${p.mp}」`,
-      isWechat?'点击跳转（微信内）':'将在微信中打开',"doAction('jump')");
+    if(isWechat){
+      // 微信内用开放标签直接跳转
+      actions+=`<wx-open-launch-weapp id="launch-btn" username="${p.mp}" path="${p.path||'pages/index/index'}" appid="${p.appId}" style="display:block;width:100%">
+        <script type="text/wxtag-template">
+          <style>
+            .wx-btn{display:flex;align-items:center;gap:12px;width:100%;background:#1A7A4A;color:#fff;border:none;border-radius:12px;padding:14px 16px;font-size:15px;font-weight:600;cursor:pointer;text-align:left}
+            .wx-ico{font-size:22px;flex-shrink:0}
+            .wx-label{font-size:15px;font-weight:600}
+            .wx-desc{font-size:12px;opacity:.8;margin-top:2px}
+          </style>
+          <button class="wx-btn">
+            <span class="wx-ico">🚀</span>
+            <div><div class="wx-label">打开「${p.mp}」</div><div class="wx-desc">点击直接跳转小程序</div></div>
+          </button>
+        <\/script>
+      </wx-open-launch-weapp>`;
+    } else {
+      actions+=aHtml('m-primary','🚀',`打开「${p.mp}」`,'在微信中打开可直接跳转',"doAction('jump')");
+    }
   } else {
     actions+=aHtml('m-primary','🔍',`微信搜索「${p.mp||p.name}」`,
       '复制名称后在微信搜索',"doAction('search')");

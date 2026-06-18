@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>沪球 · 上海网球/匹克球/板式网球</title>
+<title>强了么 · 上海网球/匹克球/板式网球</title>
 <style>
 :root{
   --green:#1A7A4A;--green2:#52B788;--surface:#F2F5F2;
@@ -247,7 +247,7 @@ header{
 <body>
 <header id="mainHeader">
   <div class="hd-row1">
-    <div class="logo">🎾 沪球</div>
+    <div class="logo">🎾 强了么</div>
     <div class="search-wrap">
       <input class="search-bar" id="searchInput" type="search"
         placeholder="搜球馆、地址、区域…"
@@ -408,7 +408,7 @@ const UA_SHORT=(()=>{
 
 function track(type,data={}){
   try{
-    const key='huqiu_events';
+    const key='qiangle_events';
     const list=JSON.parse(localStorage.getItem(key)||'[]');
     list.push({id:Date.now()+Math.random().toString(36).slice(2,5),
       type,ts:Date.now(),sid:SID,ua:UA_SHORT,...data});
@@ -420,8 +420,8 @@ function track(type,data={}){
 // ════════════════════════
 //  用户数据（收藏 & 标签）
 // ════════════════════════
-function getUD(){return JSON.parse(localStorage.getItem('huqiu_user')||'{"favs":[],"tags":{}}');}
-function saveUD(d){localStorage.setItem('huqiu_user',JSON.stringify(d));}
+function getUD(){return JSON.parse(localStorage.getItem('qiangle_user')||'{"favs":[],"tags":{}}');}
+function saveUD(d){localStorage.setItem('qiangle_user',JSON.stringify(d));}
 function isFav(id){return getUD().favs.includes(id);}
 function toggleFav(id,vname){
   const d=getUD();

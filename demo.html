@@ -163,7 +163,7 @@ header{
   position:fixed;bottom:0;left:0;right:0;
   background:#fff;border-top:1px solid var(--border);
   display:flex;padding:8px 0 calc(8px + var(--safe-bottom));
-  z-index:300;box-shadow:0 -2px 10px rgba(0,0,0,.06);
+  z-index:800;box-shadow:0 -2px 10px rgba(0,0,0,.06);
 }
 .bnav-btn{
   flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
@@ -175,7 +175,7 @@ header{
 /* 弹窗 */
 .modal-bg{
   display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
-  z-index:500;align-items:flex-end;justify-content:center;
+  z-index:1500;align-items:flex-end;justify-content:center;
 }
 .modal-bg.open{display:flex}
 .modal{
@@ -209,7 +209,7 @@ header{
   font-size:14px;cursor:pointer;width:100%;text-align:center;padding:10px 0 0;
 }
 /* 标签弹窗 */
-.tag-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;align-items:flex-end;justify-content:center}
+.tag-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1500;align-items:flex-end;justify-content:center}
 .tag-modal.open{display:flex}
 .tag-panel{
   background:#fff;border-radius:20px 20px 0 0;
@@ -243,11 +243,11 @@ header{
   position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.8);
   background:rgba(0,0,0,.75);color:#fff;padding:10px 18px;
   border-radius:8px;font-size:13px;opacity:0;transition:all .2s;
-  pointer-events:none;z-index:999;white-space:nowrap;
+  pointer-events:none;z-index:2000;white-space:nowrap;
 }
 .toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 /* === 筛选弹窗 === */
-.filter-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:550;align-items:flex-end;justify-content:center}
+.filter-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1500;align-items:flex-end;justify-content:center}
 .filter-modal.open{display:flex}
 .filter-panel{
   background:#fff;border-radius:20px 20px 0 0;

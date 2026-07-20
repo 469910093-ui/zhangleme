@@ -659,7 +659,7 @@ function saveVenueTags(id,tags){const d=getUD();d.tags[id]=tags;saveUD(d);}
 // ════════════════════════
 //  筛选状态
 // ════════════════════════
-const S={sport:'',district:'',env:'',ac:'',price:'',diff:'',plt:'',fav:'',metro:'',view:'list'};
+const S={sport:'',district:'',env:'',ac:'',today:'',price:'',diff:'',plt:'',fav:'',metro:'',view:'list'};
 const FILTERS=[
   {k:'sport',opts:[['','全部'],['tennis','🎾 网球'],['pickleball','◎ 匹克球'],['padel','▬● 板式网球']]},
   null,
@@ -672,6 +672,8 @@ const FILTERS=[
   {k:'price',opts:[['','不限'],['low','¥80以下'],['mid','¥80-150'],['high','¥150+']]},
   null,
   {k:'diff',opts:[['','难度'],['easy','随时订'],['mid','提前订'],['hard','难抢']]},
+  null,
+  {k:'today',opts:[['','今天不限'],['1','✅ 今天可订']]},
   null,
   {k:'metro',cls:'metro-chip',opts:[['','🚇 地铁站'],['人民广场','人民广场'],['静安寺','静安寺'],['南京东路','南京东路'],['南京西路','南京西路'],['陕西南路','陕西南路'],['大宁','大宁'],['徐家汇','徐家汇'],['漕河泾','漕河泾'],['宜山路','宜山路'],['中山公园','中山公园'],['长寿路','长寿路'],['淞虹路','淞虹路'],['陆家嘴','陆家嘴'],['世纪公园','世纪公园'],['龙阳路','龙阳路'],['张江高科','张江高科'],['五角场','五角场'],['江湾体育场','江湾体育场'],['虹口足球场','虹口足球场'],['外滩','外滩'],['老西门','老西门'],['虹桥火车站','虹桥火车站'],['七宝','七宝'],['莘庄','莘庄']]},
 ];
@@ -732,6 +734,7 @@ function getFiltered(){
     if(S.price==='mid'&&(v.pMax<80||v.pMin>150))return false;
     if(S.price==='high'&&v.pMax<=150)return false;
     if(S.diff&&v.diff!==S.diff)return false;
+    if(S.today==='1'&&v.days!==0)return false;
     if(S.plt&&v.plt!==S.plt)return false;
     if(S.metro){
       const m=METROS[S.metro];if(!m)return false;
@@ -756,7 +759,7 @@ function getFiltered(){
 // ════════════════════════
 function buildFilters(){
   // 渲染到筛选弹窗内（分维度 section）
-  const dimLabels={sport:'🎾 运动类型',district:'📍 区域',env:'🏠 室内外',ac:'❄️ 空调',price:'💰 价格',diff:'⏰ 订场难度',metro:'🚇 地铁站'};
+  const dimLabels={sport:'🎾 运动类型',district:'📍 区域',env:'🏠 室内外',ac:'❄️ 空调',price:'💰 价格',diff:'⏰ 订场难度',today:'📅 今天可订',metro:'🚇 地铁站'};
   let h='';
   FILTERS.forEach(g=>{
     if(!g)return; // 跳过分隔符
@@ -779,6 +782,8 @@ function buildFilters(){
     });
     h+=`</div></div>`;
   });
+  // “今天可订”为估算数据，加提示避免误导
+  h+=`<div style="font-size:11px;color:var(--muted);line-height:1.5;margin-top:-4px;padding:0 2px">⚠️ “今天可订”为人工估算的静态数据，非实时库存，实际以各平台小程序为准。</div>`;
   document.getElementById('filterPanelBody').innerHTML=h;
   // 更新底部应用按钮文案
   const cnt=getFiltered().length;

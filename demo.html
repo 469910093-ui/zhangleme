@@ -1159,13 +1159,14 @@ function openBooking(id){
   if(curVenue.plt==='wechat'){
     actions+=aHtml('m-primary','💬','加群预约','加入对应微信群后群内抢位',"doAction('group')");
   } else if(p.appId){
-    if(isWechat){
+    // 有 appId 的平台：始终显示跳转按钮（兜底，所有环境可见）
+    actions+=aHtml('m-primary','🚀',`打开「${p.mp}」`,'点击跳转到小程序预约',"doAction('jump')");
+    // 微信内且 JS-SDK 签名成功时，额外显示 wx-open-launch-weapp（体验更好，一键跳转）
+    if(isWechat&&wxReady){
       wxBtn.setAttribute('username', p.gh||'');
       wxBtn.setAttribute('appid', p.appId);
       wxBtn.setAttribute('path', p.path||'pages/index/index');
       wxBtn.style.display='block';
-    } else {
-      actions+=aHtml('m-primary','🚀',`打开「${p.mp}」`,'在微信中打开可直接跳转',"doAction('jump')");
     }
   } else {
     actions+=aHtml('m-primary','🔍',`微信搜索「${p.mp||p.name}」`,

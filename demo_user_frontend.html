@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>强了么 - 找场地</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
+      background: #f5f5f5;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .header h1 { font-size: 24px; margin-bottom: 8px; }
+    .header p { font-size: 13px; opacity: 0.9; }
+
+    .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+
+    /* 选择器面板 */
+    .selector-panel {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .selector-row {
+      display: grid;
+      grid-template-columns: 2fr 1.5fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 8px rgba(102, 126, 234, 0.2);
+    }
+
+    /* 时段选择器 */
+    .time-selector {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .time-btn {
+      padding: 12px;
+      border: 2px solid #ddd;
+      background: white;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      color: #666;
+    }
+
+    .time-btn:hover {
+      border-color: #667eea;
+      background: #f0f0ff;
+    }
+
+    .time-btn.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-color: #667eea;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    /* 筛选面板 */
+    .filter-panel {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .filter-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 12px;
+    }
+
+    .filter-group {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .filter-checkbox {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-checkbox:hover {
+      background: #f5f5f5;
+    }
+
+    .filter-checkbox input {
+      margin-right: 8px;
+      cursor: pointer;
+    }
+
+    .filter-checkbox label {
+      cursor: pointer;
+      font-size: 13px;
+      color: #666;
+    }
+
+    /* 搜索按钮 */
+    .search-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      transition: all 0.3s;
+      margin-bottom: 20px;
+    }
+
+    .search-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    .search-btn:active {
+      transform: translateY(0);
+    }
+
+    /* 加载状态 */
+    .loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f0f0f0;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* 结果列表 */
+    .results-section {
+      margin-bottom: 20px;
+    }
+
+    .results-header {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .venue-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border-left: 4px solid #667eea;
+      transition: all 0.3s;
+    }
+
+    .venue-card:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+
+    .venue-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .venue-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: #333;
+    }
+
+    .availability-badge {
+      background: #d4edda;
+      color: #155724;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .venue-meta {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: #666;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .meta-icon {
+      font-size: 16px;
+    }
+
+    .schedule-info {
+      background: #f9f9f9;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+
+    .schedule-info strong {
+      color: #667eea;
+    }
+
+    .feedback-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      color: #999;
+    }
+
+    .star-rating {
+      color: #ffc107;
+    }
+
+    .action-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    /* 响应式 */
+    @media (max-width: 640px) {
+      .selector-row {
+        grid-template-columns: 1fr;
+      }
+
+      .time-selector {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .filter-group {
+        grid-template-columns: 1fr;
+      }
+
+      .action-buttons {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 顶部 -->
+  <div class="header">
+    <h1>⛳ 强了么</h1>
+    <p>选择时间，找可用场地</p>
+  </div>
+
+  <div class="container">
+    <!-- 日期 + 时间选择 -->
+    <div class="selector-panel">
+      <div class="selector-row">
+        <div class="form-group">
+          <label>📅 出行日期</label>
+          <input type="date" id="dateInput" min="2026-07-06">
+        </div>
+        <div class="form-group">
+          <label>🏙️ 选择城市</label>
+          <select id="citySelect">
+            <option value="">全部城市</option>
+            <option value="Shanghai-Pudong">浦东</option>
+            <option value="Shanghai-Huangpu">黄浦</option>
+            <option value="Shanghai-Minhang">闵行</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 13px; color: #666; margin-bottom: 12px; font-weight: 600;">
+          ⏰ 选择时段
+        </label>
+        <div class="time-selector" id="timeSelector">
+          <button class="time-btn" data-time="08:00">08:00</button>
+          <button class="time-btn" data-time="09:00">09:00</button>
+          <button class="time-btn" data-time="10:00">10:00</button>
+          <button class="time-btn" data-time="11:00">11:00</button>
+          <button class="time-btn" data-time="14:00">14:00</button>
+          <button class="time-btn" data-time="16:00">16:00</button>
+          <button class="time-btn" data-time="18:00">18:00</button>
+          <button class="time-btn" data-time="20:00">20:00</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 高级筛选 -->
+    <div class="filter-panel">
+      <div class="filter-title">🔍 场地要求</div>
+      <div class="filter-group">
+        <div class="filter-checkbox">
+          <input type="checkbox" id="filter-parking" value="停车位">
+          <label for="filter-parking">停车位</label>
+        </div>
+        <div class="filter-checkbox">
+          <input type="checkbox" id="filter-shower" value="淋浴间">
+          <label for="filter-shower">淋浴间</label>
+        </div>
+        <div class="filter-checkbox">
+          <input type="checkbox" id="filter-indoor" value="室内">
+          <label for="filter-indoor">室内</label>
+        </div>
+        <div class="filter-checkbox">
+          <input type="checkbox" id="filter-outdoor" value="室外">
+          <label for="filter-outdoor">室外</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 搜索按钮 -->
+    <button class="search-btn" onclick="searchVenues()">🔎 搜索可用场地</button>
+
+    <!-- 结果区域 -->
+    <div class="results-section">
+      <div id="resultsContainer"></div>
+    </div>
+  </div>
+
+  <script>
+    // 设置今天为默认日期
+    document.getElementById('dateInput').valueAsDate = new Date();
+
+    // 时间按钮点击事件
+    document.querySelectorAll('.time-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    // 默认选择第一个时间
+    document.querySelector('.time-btn').click();
+
+    async function searchVenues() {
+      const date = document.getElementById('dateInput').value;
+      const timeBtn = document.querySelector('.time-btn.active');
+      const time = timeBtn ? timeBtn.dataset.time : '08:00';
+      const city = document.getElementById('citySelect').value;
+
+      const filters = {
+        amenities: Array.from(document.querySelectorAll('.filter-checkbox input:checked'))
+          .map(cb => cb.value)
+      };
+
+      if (!date) {
+        alert('⚠️ 请选择日期');
+        return;
+      }
+
+      // 显示加载状态
+      const container = document.getElementById('resultsContainer');
+      container.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>正在查询场地...</p>
+        </div>
+      `;
+
+      try {
+        // 模拟 API 调用（实际应调用 BFF 端点）
+        const response = await mockApiCall({
+          date,
+          time_slot: `${time}:00`,  // 转换为完整的 HH:MM:SS 格式
+          location: city,
+          services: filters.amenities,
+          limit: 20,
+          offset: 0
+        });
+
+        renderResults(response);
+      } catch (error) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">❌</div>
+            <p>${error.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    async function mockApiCall(params) {
+      // 模拟网络延迟
+      await new Promise(r => setTimeout(r, 1000));
+
+      // 模拟 BFF 返回的数据
+      return {
+        success: true,
+        data: [
+          {
+            id: 1,
+            name: '浦东网球中心',
+            location: 'Shanghai-Pudong',
+            difficulty: 'medium',
+            amenities: ['停车位', '淋浴间', '餐厅'],
+            schedule_preview: {
+              time_slot: params.time_slot,
+              available_slots: 2,
+              total_capacity: 3
+            },
+            available_slots_this_week: [
+              params.time_slot,
+              `${String(parseInt(params.time_slot.split(':')[0]) + 1).padStart(2, '0')}:00:00`,
+              `${String(parseInt(params.time_slot.split(':')[0]) + 2).padStart(2, '0')}:00:00`
+            ],
+            feedback: {
+              avg_quality: 4.5,
+              total_feedbacks: 12,
+              availability_accuracy: 0.92
+            },
+            group_info: {
+              member_count: 28,
+              wechat_group_id: 'group_001'
+            },
+            booking_links: {
+              mini_app: 'weixin://app/123456'
+            }
+          },
+          {
+            id: 2,
+            name: '黄浦区体育馆',
+            location: 'Shanghai-Huangpu',
+            difficulty: 'easy',
+            amenities: ['停车位', '室内'],
+            schedule_preview: {
+              time_slot: params.time_slot,
+              available_slots: 1,
+              total_capacity: 1
+            },
+            available_slots_this_week: [params.time_slot],
+            feedback: {
+              avg_quality: 4.2,
+              total_feedbacks: 8,
+              availability_accuracy: 0.85
+            },
+            group_info: {
+              member_count: 15,
+              wechat_group_id: 'group_002'
+            },
+            booking_links: {
+              mini_app: 'weixin://app/123456'
+            }
+          },
+          {
+            id: 3,
+            name: '闵行网球馆',
+            location: 'Shanghai-Minhang',
+            difficulty: 'hard',
+            amenities: ['淋浴间', '室外'],
+            schedule_preview: {
+              time_slot: params.time_slot,
+              available_slots: 3,
+              total_capacity: 3
+            },
+            available_slots_this_week: [
+              params.time_slot,
+              `${String(parseInt(params.time_slot.split(':')[0]) + 1).padStart(2, '0')}:00:00`,
+            ],
+            feedback: {
+              avg_quality: 4.8,
+              total_feedbacks: 24,
+              availability_accuracy: 0.96
+            },
+            group_info: {
+              member_count: 42,
+              wechat_group_id: 'group_003'
+            },
+            booking_links: {
+              mini_app: 'weixin://app/123456'
+            }
+          }
+        ]
+      };
+    }
+
+    function renderResults(response) {
+      const container = document.getElementById('resultsContainer');
+
+      if (!response.success || response.data.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">😔</div>
+            <p>抱歉，该时段暂无可用场地</p>
+            <p style="font-size: 12px; margin-top: 8px;">建议选择其他时间或地点</p>
+          </div>
+        `;
+        return;
+      }
+
+      const resultsHtml = `
+        <div class="results-header">🎾 找到 ${response.data.length} 个可用场地</div>
+        ${response.data.map(venue => `
+          <div class="venue-card">
+            <div class="venue-header">
+              <div class="venue-name">${venue.name}</div>
+              <div class="availability-badge">✅ 有空位</div>
+            </div>
+
+            <div class="venue-meta">
+              <div class="meta-item">
+                <span class="meta-icon">📍</span>
+                <span>${venue.location === 'Shanghai-Pudong' ? '浦东' : venue.location === 'Shanghai-Huangpu' ? '黄浦' : '闵行'}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-icon">⭐</span>
+                <span>${['简易', '中等', '高难'][['easy', 'medium', 'hard'].indexOf(venue.difficulty)]}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-icon">🏢</span>
+                <span>${venue.amenities.join(' • ')}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-icon">👥</span>
+                <span>${venue.group_info.member_count} 人社群</span>
+              </div>
+            </div>
+
+            <div class="schedule-info">
+              🕐 <strong>${venue.schedule_preview.time_slot}</strong> 还有 <strong>${venue.schedule_preview.available_slots}</strong> 个场地 |
+              本周还有 <strong>${venue.available_slots_this_week.length}</strong> 个时段
+            </div>
+
+            <div class="feedback-bar">
+              <span class="star-rating">⭐ ${venue.feedback.avg_quality}</span>
+              <span>(${venue.feedback.total_feedbacks} 条反馈)</span>
+              <span style="margin-left: auto; color: #667eea;">准确率 ${Math.round(venue.feedback.availability_accuracy * 100)}%</span>
+            </div>
+
+            <div class="action-buttons">
+              <button class="btn btn-primary" onclick="bookVenue(${venue.id}, '${venue.name}')">
+                ✅ 立即预约
+              </button>
+              <button class="btn btn-secondary" onclick="addToFavorite(${venue.id})">
+                ❤️ 收藏
+              </button>
+            </div>
+          </div>
+        `).join('')}
+      `;
+
+      container.innerHTML = resultsHtml;
+    }
+
+    function bookVenue(venueId, venueName) {
+      alert(`✅ 即将跳转到小程序预约《${venueName}》...\n\n实际环境中会调用微信小程序打开接口`);
+    }
+
+    function addToFavorite(venueId) {
+      alert(`❤️ 已添加到收藏！下次登录时能快速找到`);
+    }
+
+    // 页面加载时执行一次搜索
+    setTimeout(() => searchVenues(), 500);
+  </script>
+</body>
+</html>

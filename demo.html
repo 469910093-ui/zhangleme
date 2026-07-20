@@ -6,6 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>强了么 · 上海网球/匹克球/板式网球</title>
 <script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root{
   --green:#1A7A4A;--green2:#52B788;--surface:#F2F5F2;
@@ -244,6 +246,63 @@ header{
   pointer-events:none;z-index:999;white-space:nowrap;
 }
 .toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+/* === 地图视图 === */
+.map-view{display:none;position:fixed;top:calc(var(--header-h,80px) + 50px);left:0;right:0;bottom:calc(60px + var(--safe-bottom));z-index:100}
+.map-view.on{display:block}
+#map{width:100%;height:100%;background:#E5E7EB}
+.map-info{
+  position:absolute;left:14px;right:14px;bottom:14px;
+  background:#fff;border-radius:12px;padding:12px 14px;
+  box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:1000;
+  display:none;max-height:140px;overflow-y:auto;
+}
+.map-info.on{display:block}
+.map-info-name{font-size:15px;font-weight:600;margin-bottom:4px}
+.map-info-row{font-size:12px;color:var(--muted);line-height:1.6}
+.map-info-row b{color:var(--text);font-weight:500}
+.map-info-close{
+  position:absolute;top:8px;right:10px;background:none;border:none;
+  font-size:18px;color:var(--muted);cursor:pointer;line-height:1;
+}
+.view-toggle{
+  display:flex;background:#fff;border-radius:8px;overflow:hidden;
+  border:1px solid var(--border);margin-left:8px;
+}
+.vt-btn{
+  padding:5px 12px;background:#fff;border:none;font-size:12px;
+  cursor:pointer;color:var(--muted);border-right:1px solid var(--border);
+}
+.vt-btn:last-child{border-right:none}
+.vt-btn.on{background:var(--green);color:#fff}
+/* === 最近可订字段 === */
+.cavail{
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:11px;padding:2px 8px;border-radius:4px;
+  background:#F0FDF4;color:#15803D;margin-top:3px;
+}
+.cavail.none{background:#FEF2F2;color:#9CA3AF}
+.cavail i{font-style:normal}
+/* === 距离标签 === */
+.cdist{
+  display:inline-flex;align-items:center;gap:2px;
+  font-size:11px;color:#0369A1;background:#F0F9FF;
+  padding:2px 7px;border-radius:4px;margin-left:6px;
+}
+/* === 地铁站筛选 === */
+.metro-chip{font-size:11px;padding:4px 10px;border-radius:14px}
+/* === 详情弹窗新排版 === */
+.m-section{
+  background:var(--surface);border-radius:10px;padding:12px 14px;margin-bottom:10px;
+}
+.m-section-title{font-size:11px;color:var(--muted);margin-bottom:6px;letter-spacing:.5px}
+.m-section-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:3px 0}
+.m-section-row span:first-child{color:var(--muted)}
+.m-section-row span:last-child{font-weight:500}
+.m-desc{
+  background:#fff;border:1px solid var(--border);border-radius:10px;
+  padding:11px 14px;font-size:12px;color:var(--text);line-height:1.65;margin-bottom:12px;
+}
+.m-desc strong{color:var(--green);display:block;margin-bottom:4px;font-size:13px}
 </style>
 </head>
 <body>
@@ -256,6 +315,7 @@ header{
         oninput="onSearch(this.value)">
     </div>
     <div class="hd-actions">
+      <button class="hd-btn" id="locBtn" onclick="getUserLocation()" title="获取定位">📍 定位</button>
       <button class="hd-btn" onclick="shareApp()">📤</button>
     </div>
   </div>
@@ -270,19 +330,38 @@ header{
   <div id="gapDiv"></div>
   <div class="result-bar">
     <div class="result-count" id="resCount"></div>
-    <select class="sort-sel" id="sortSel" onchange="render()">
-      <option value="">默认</option>
-      <option value="pa">价格↑</option>
-      <option value="pd">价格↓</option>
-      <option value="di">最易订优先</option>
-    </select>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="view-toggle" id="viewToggle">
+        <button class="vt-btn on" onclick="setView('list',this)">☰ 列表</button>
+        <button class="vt-btn" onclick="setView('map',this)">🗺 地图</button>
+      </div>
+      <select class="sort-sel" id="sortSel" onchange="render()">
+        <option value="">默认</option>
+        <option value="pa">价格↑</option>
+        <option value="pd">价格↓</option>
+        <option value="di">最易订优先</option>
+        <option value="dist">距离近→远</option>
+      </select>
+    </div>
   </div>
   <div class="vgrid" id="vgrid"></div>
+</div>
+
+<div class="map-view" id="mapView">
+  <div id="map"></div>
+  <div class="map-info" id="mapInfo">
+    <button class="map-info-close" onclick="closeMapInfo()">×</button>
+    <div class="map-info-name" id="miName"></div>
+    <div class="map-info-row" id="miRows"></div>
+  </div>
 </div>
 
 <nav class="bnav">
   <button class="bnav-btn active" onclick="setNav('list',this)">
     <span class="bnav-ico">🏟</span>场馆列表
+  </button>
+  <button class="bnav-btn" onclick="setNav('map',this)">
+    <span class="bnav-ico">🗺</span>地图视图
   </button>
   <button class="bnav-btn" id="favNavBtn" onclick="toggleFavFilter(this)">
     <span class="bnav-ico">❤️</span>我的收藏
@@ -344,17 +423,17 @@ header{
 //  平台配置
 // ════════════════════════
 const PLT={
-  jushi:    {name:'久事体育',  cls:'p-jushi',    mp:'久事体育智慧场馆',    gh:'',appId:'wxbd4ec54a9e9ce6dd',path:'pages/index/index'},
-  yundong:  {name:'韵动吧',    cls:'p-yundong',  mp:'韵动吧',              gh:'',appId:'wxd0286fb3b0e39384',path:'pages/index/index'},
-  quyundong:{name:'趣运动',    cls:'p-quyundong',mp:'趣运动',              gh:'',appId:'wxbb9c3b35727d8ce8',path:''},
-  gogo:     {name:'勾勾运动',  cls:'p-gogo',     mp:'GoGoSports勾勾运动', gh:'',appId:'wxa43e880705719304',path:''},
-  jiubo:    {name:'久博',      cls:'p-jiubo',    mp:'久博网球',            gh:'',appId:'',path:''},
-  tennis:   {name:'网球有约',  cls:'p-tennis',   mp:'网球有约',            gh:'',appId:'wx734e4a8233d087c4',path:''},
-  duoduo:   {name:'多多动',    cls:'p-duoduo',   mp:'多多动OurPickleball', gh:'',appId:'wx439221904a29bf7f',path:''},
-  yonex:    {name:'帮帮体育',  cls:'p-yonex',    mp:'YONEX Tennis Lab',   gh:'',appId:'wx95dfa9688fcbf44f',path:''},
-  padelu:   {name:'PadelU',   cls:'p-padelu',   mp:'PadelU板式网球',       gh:'',appId:'wx8d767e8e1ffe5f83',path:''},
-  self:     {name:'自营',      cls:'p-self',     mp:'',                    gh:'',appId:'',path:''},
-  wechat:   {name:'微信群',    cls:'p-wechat',   mp:'',                    gh:'',appId:'',path:''},
+  jushi:    {name:'久事体育',  cls:'p-jushi',    pin:'#1D4ED8', mp:'久事体育智慧场馆',    gh:'',appId:'wxbd4ec54a9e9ce6dd',path:'pages/index/index'},
+  yundong:  {name:'韵动吧',    cls:'p-yundong',  pin:'#15803D', mp:'韵动吧',              gh:'',appId:'wxd0286fb3b0e39384',path:'pages/index/index'},
+  quyundong:{name:'趣运动',    cls:'p-quyundong',pin:'#0369A1', mp:'趣运动',              gh:'',appId:'wxbb9c3b35727d8ce8',path:''},
+  gogo:     {name:'勾勾运动',  cls:'p-gogo',     pin:'#B45309', mp:'GoGoSports勾勾运动', gh:'',appId:'wxa43e880705719304',path:''},
+  jiubo:    {name:'久博',      cls:'p-jiubo',    pin:'#7E22CE', mp:'久博网球',            gh:'',appId:'',path:''},
+  tennis:   {name:'网球有约',  cls:'p-tennis',   pin:'#B45309', mp:'网球有约',            gh:'',appId:'wx734e4a8233d087c4',path:''},
+  duoduo:   {name:'多多动',    cls:'p-duoduo',   pin:'#BE123C', mp:'多多动OurPickleball', gh:'',appId:'wx439221904a29bf7f',path:''},
+  yonex:    {name:'帮帮体育',  cls:'p-yonex',    pin:'#4338CA', mp:'YONEX Tennis Lab',   gh:'',appId:'wx95dfa9688fcbf44f',path:''},
+  padelu:   {name:'PadelU',   cls:'p-padelu',   pin:'#9B1D75', mp:'PadelU板式网球',       gh:'',appId:'wx8d767e8e1ffe5f83',path:''},
+  self:     {name:'自营',      cls:'p-self',     pin:'#52525B', mp:'',                    gh:'',appId:'',path:''},
+  wechat:   {name:'微信群',    cls:'p-wechat',   pin:'#166534', mp:'',                    gh:'',appId:'',path:''},
 };
 
 // ════════════════════════
@@ -407,6 +486,28 @@ const V=[
   {id:44,name:'PadelU·MOHO Mall店',district:'静安',addr:'静安区MOHO Mall',sports:['padel'],indoor:true,pMin:180,pMax:260,courts:2,fac:{l:1,s:1,p:1},plt:'padelu',days:1,diff:'easy',q:'partial'},
   {id:45,name:'PadelU·漕河泾屋顶店（PadelUP）',district:'徐汇',addr:'徐汇区漕河泾路250号银海大楼11楼屋顶',sports:['padel'],indoor:false,pMin:180,pMax:300,courts:2,fac:{l:1,s:0,p:1},plt:'padelu',days:1,diff:'mid',note:'屋顶露天场，¥180–300/h，停车方便',q:'partial'},
 ];
+
+// 场馆坐标表（上海估算坐标，精度约100m，足够 demo 用）
+const COORDS={
+  1:[121.528,31.242],2:[121.550,31.230],3:[121.420,31.220],4:[121.440,31.195],5:[121.380,31.080],
+  6:[121.450,31.170],7:[121.500,31.050],8:[121.445,31.245],9:[121.400,31.250],10:[121.450,31.180],
+  11:[121.390,31.220],12:[121.410,31.240],13:[121.540,31.220],14:[121.450,31.180],15:[121.440,31.180],
+  16:[121.410,31.210],17:[121.380,31.080],18:[121.390,31.170],19:[121.420,31.220],20:[121.490,31.270],
+  21:[121.440,31.230],22:[121.390,31.250],23:[121.420,31.220],24:[121.250,31.000],25:[121.430,31.200],
+  26:[121.430,31.200],27:[121.520,31.300],28:[121.360,31.220],29:[121.550,31.150],30:[121.490,31.220],
+  31:[121.320,31.190],32:[121.430,31.220],33:[121.410,31.210],34:[121.490,31.240],35:[121.560,31.200],
+  36:[121.520,31.300],37:[121.540,31.220],38:[121.380,31.150],39:[121.460,31.220],40:[121.440,31.200],
+  41:[121.480,31.210],42:[121.450,31.270],43:[121.450,31.260],44:[121.440,31.250],45:[121.400,31.170],
+};
+V.forEach(v=>{const c=COORDS[v.id];if(c){v.lat=c[0];v.lng=c[1];}});
+
+// 上海主要地铁站坐标（用于地铁站筛选）
+const METROS={
+  '人民广场':[121.475,31.232],'静安寺':[121.448,31.226],'南京东路':[121.485,31.238],
+  '徐家汇':[121.436,31.195],'陆家嘴':[121.500,31.240],'中山公园':[121.420,31.221],
+  '虹桥火车站':[121.320,31.195],'世纪公园':[121.550,31.218],'五角场':[121.516,31.297],
+  '大宁':[121.451,31.273],'漕河泾':[121.400,31.170],'外滩':[121.490,31.240],
+};
 
 const GAPS=[
   '勾勾运动(GoGoSports)：场馆列表需在App内确认，已收录2条代表场馆待核实',
@@ -463,7 +564,7 @@ function saveVenueTags(id,tags){const d=getUD();d.tags[id]=tags;saveUD(d);}
 // ════════════════════════
 //  筛选状态
 // ════════════════════════
-const S={sport:'',district:'',env:'',price:'',diff:'',plt:'',fav:false};
+const S={sport:'',district:'',env:'',price:'',diff:'',plt:'',fav:'',metro:'',view:'list'};
 const FILTERS=[
   {k:'sport',opts:[['','全部'],['tennis','🎾 网球'],['pickleball','◎ 匹克球'],['padel','▬● 板式网球']]},
   null,
@@ -474,6 +575,8 @@ const FILTERS=[
   {k:'price',opts:[['','不限'],['low','¥80以下'],['mid','¥80-150'],['high','¥150+']]},
   null,
   {k:'diff',opts:[['','难度'],['easy','随时订'],['mid','提前订'],['hard','难抢']]},
+  null,
+  {k:'metro',cls:'metro-chip',opts:[['','🚇 地铁站'],['人民广场','人民广场'],['静安寺','静安寺'],['南京东路','南京东路'],['徐家汇','徐家汇'],['陆家嘴','陆家嘴'],['中山公园','中山公园'],['世纪公园','世纪公园'],['五角场','五角场'],['大宁','大宁'],['漕河泾','漕河泾'],['外滩','外滩']]},
 ];
 
 // ════════════════════════
@@ -491,6 +594,30 @@ function onSearch(q){
 // ════════════════════════
 //  筛选 & 排序
 // ════════════════════════
+// 用户定位（H5 geolocation，小程序里改用 wx.getLocation）
+let userLoc=null;
+function getUserLocation(){
+  if(!navigator.geolocation){return;}
+  navigator.geolocation.getCurrentPosition(
+    pos=>{userLoc=[pos.coords.longitude,pos.coords.latitude];track('geo_located',{});
+      // 定位成功后若当前是距离排序，重排
+      if(document.getElementById('sortSel').value==='dist')render();
+      // 更新定位按钮状态
+      const lb=document.getElementById('locBtn');if(lb)lb.textContent='📍 '+userLoc[0].toFixed(2)+','+userLoc[1].toFixed(2);
+    },
+    err=>{track('geo_failed',{msg:err.message});showToast('定位失败：'+err.message+'（可继续用，距离排序不可用）');},
+    {enableHighAccuracy:false,timeout:8000,maximumAge:600000}
+  );
+}
+// haversine 距离（km）
+function haversine(a,b){
+  const R=6371,toRad=d=>d*Math.PI/180;
+  const dLat=toRad(b[1]-a[1]),dLng=toRad(b[0]-a[0]);
+  const s=Math.sin(dLat/2)**2+Math.cos(toRad(a[1]))*Math.cos(toRad(b[1]))*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(s));
+}
+function venueDist(v){return userLoc?haversine(userLoc,[v.lng,v.lat]):null;}
+
 function getFiltered(){
   const q=(document.getElementById('searchInput').value||'').toLowerCase();
   const favIds=getUD().favs;
@@ -507,12 +634,21 @@ function getFiltered(){
     if(S.price==='high'&&v.pMax<=150)return false;
     if(S.diff&&v.diff!==S.diff)return false;
     if(S.plt&&v.plt!==S.plt)return false;
+    if(S.metro){
+      const m=METROS[S.metro];if(!m)return false;
+      if(!v.lat||!v.lng)return false;
+      if(haversine(m,[v.lng,v.lat])>3)return false; // 3km 内
+    }
     return true;
   });
   const so=document.getElementById('sortSel').value;
   if(so==='pa')r.sort((a,b)=>a.pMin-b.pMin);
   else if(so==='pd')r.sort((a,b)=>b.pMax-a.pMax);
   else if(so==='di'){const o={easy:0,mid:1,hard:2};r.sort((a,b)=>o[a.diff]-o[b.diff]);}
+  else if(so==='dist'){
+    if(!userLoc){showToast('请先点顶部"📍定位"获取位置');document.getElementById('sortSel').value='';}
+    else r.sort((a,b)=>(venueDist(a)||9e9)-(venueDist(b)||9e9));
+  }
   return r;
 }
 
@@ -550,6 +686,20 @@ function diffHtml(d){
   if(d==='easy')return'<span class="diff-easy">✅ 随时可订</span>';
   if(d==='mid')return'<span class="diff-mid">⏰ 提前1–2天</span>';
   return'<span class="diff-hard">🔥 难抢</span>';
+}
+// 基于 days 字段生成"最近可订"日期文案（days=0今天,1明天,2后天...）
+function nearestHtml(v){
+  if(v.days==null)return'<span class="cavail none">最近可订：暂无</span>';
+  const d=new Date();d.setDate(d.getDate()+v.days);
+  const m=d.getMonth()+1,day=d.getDate(),w='日一二三四五六'[d.getDay()];
+  const label=v.days===0?'今天':v.days===1?'明天':v.days===2?'后天':`${m}月${day}日`;
+  const dateStr=v.days<=2?label:`${m}月${day}日（周${w}）`;
+  return`<span class="cavail"><i>📅</i>最近可订：${dateStr}</span>`;
+}
+function distHtml(v){
+  const km=venueDist(v);if(km==null)return'';
+  const txt=km<1?Math.round(km*1000)+'m':km.toFixed(1)+'km';
+  return`<span class="cdist">📍${txt}</span>`;
 }
 
 function card(v){
@@ -591,7 +741,8 @@ function card(v){
       <div class="cfoot">
         <div>
           <div class="cprice">¥${v.pMin}–${v.pMax}<span>/小时</span></div>
-          <div style="margin-top:3px">${diffHtml(v.diff)}</div>
+          <div style="margin-top:3px">${diffHtml(v.diff)}${distHtml(v)}</div>
+          <div style="margin-top:4px">${nearestHtml(v)}</div>
         </div>
         <button class="book-btn" onclick="openBooking(${v.id})">预约 →</button>
       </div>
@@ -601,12 +752,13 @@ function card(v){
 }
 
 let gapOpen=false;
+let map=null,mapMarkers={},mapInited=false;
 function render(){
   const filtered=getFiltered();
   const partial=V.filter(x=>x.q==='partial').length;
   const favCount=getUD().favs.length;
   document.getElementById('statsBar').textContent=
-    `${V.length}个场馆 · ${Object.keys(PLT).length}个平台${favCount>0?' · ❤️'+favCount+'个收藏':''}`;
+    `${V.length}个场馆 · ${Object.keys(PLT).length}个平台${favCount>0?' · ❤️'+favCount+'个收藏':''}${userLoc?' · 📍已定位':''}`;
   document.getElementById('resCount').textContent=`筛选结果：${filtered.length} 个场馆`;
   // gap
   const gapItems=GAPS.map(g=>`<span style="display:block">· ${g}</span>`).join('');
@@ -623,6 +775,63 @@ function render(){
   // 更新收藏底部按钮状态
   const fbn=document.getElementById('favNavBtn');
   if(fbn)fbn.classList.toggle('active',S.fav);
+  // 地图视图
+  if(S.view==='map')renderMap(filtered);
+}
+
+function ensureMap(){
+  if(mapInited)return;
+  if(typeof L==='undefined'){showToast('地图库未加载，请检查网络');return false;}
+  map=L.map('map',{zoomControl:true,attributionControl:false}).setView([31.230,121.473],11);
+  L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}',{
+    subdomains:['1','2','3','4'],maxZoom:18
+  }).addTo(map);
+  mapInited=true;
+  return true;
+}
+
+function renderMap(filtered){
+  if(!ensureMap())return;
+  // 清旧 marker
+  Object.values(mapMarkers).forEach(m=>map.removeLayer(m));
+  mapMarkers={};
+  const bounds=[];
+  filtered.forEach(v=>{
+    if(!v.lat||!v.lng)return;
+    const p=PLT[v.plt];
+    const mk=L.circleMarker([v.lat,v.lng],{
+      radius:9,color:p.pin,fillColor:p.pin,fillOpacity:.9,weight:2
+    }).bindPopup(`<b>${v.name}</b><br>📍${v.district}·${v.addr}<br>¥${v.pMin}-${v.pMax}/h`);
+    mk.on('click',()=>showMapInfo(v));
+    mk.addTo(map);
+    mapMarkers[v.id]=mk;
+    bounds.push([v.lat,v.lng]);
+  });
+  if(bounds.length){map.fitBounds(bounds,{padding:[30,30],maxZoom:14});}
+  else map.setView([31.230,121.473],11);
+}
+
+function showMapInfo(v){
+  const p=PLT[v.plt];
+  document.getElementById('miName').textContent=v.name;
+  document.getElementById('miRows').innerHTML=`
+    <div class="m-section-row"><span>📍位置</span><span>${v.district}·${v.addr}</span></div>
+    <div class="m-section-row"><span>💰价格</span><span>¥${v.pMin}-${v.pMax}/h</span></div>
+    <div class="m-section-row"><span>📅最近可订</span><span>${v.days==null?'暂无':v.days+'天后'}</span></div>
+    <div class="m-section-row"><span>🏷平台</span><span>${p.name}</span></div>
+    <button class="book-btn" style="margin-top:8px;width:100%" onclick="openBooking(${v.id})">预约 →</button>`;
+  document.getElementById('mapInfo').classList.add('on');
+}
+function closeMapInfo(){document.getElementById('mapInfo').classList.remove('on');}
+
+function setView(mode,btn){
+  S.view=mode;
+  document.querySelectorAll('.vt-btn').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  const mv=document.getElementById('mapView');
+  if(mode==='map'){mv.classList.add('on');if(map)setTimeout(()=>map.invalidateSize(),100);}
+  else mv.classList.remove('on');
+  render();
 }
 
 // ════════════════════════
@@ -701,19 +910,16 @@ function closeTagModal(e){
 let curVenue=null;
 const isWechat=/MicroMessenger/i.test(navigator.userAgent);
 
-// ── 微信 JS-SDK 初始化 ──
+// ── 微信 JS-SDK 初始化（GitHub Pages 无后端签名时静默失败，不影响展示）──
 let wxReady=false;
 if(isWechat){
   const signUrl=location.href.split('#')[0];
   fetch(`/api/wxsign?url=${encodeURIComponent(signUrl)}`)
     .then(r=>r.json())
     .then(cfg=>{
-      if(cfg.error){
-        alert('wxsign error: '+cfg.error);
-        return;
-      }
+      if(cfg.error){console.warn('wxsign error:',cfg.error);return;}
       wx.config({
-        debug:true,
+        debug:false,
         appId:cfg.appId,
         timestamp:cfg.timestamp,
         nonceStr:cfg.nonceStr,
@@ -722,29 +928,46 @@ if(isWechat){
         openTagList:['wx-open-launch-weapp']
       });
       wx.ready(()=>{ wxReady=true; });
-      wx.error(e=>alert('wx.error: '+JSON.stringify(e)));
+      wx.error(e=>console.warn('wx.error:',e));
     })
-    .catch(e=>alert('wxsign fetch failed: '+e.message));
+    .catch(e=>console.warn('wxsign fetch failed (静态托管无签名服务，跳转按钮将走复制名称方案):',e.message));
 }
 
 function openBooking(id){
   curVenue=V.find(x=>x.id===id);
   const p=PLT[curVenue.plt];
   track('booking_open',{venueId:id,venueName:curVenue.name,platform:curVenue.plt});
-  document.getElementById('mTitle').textContent='去预约 →';
+  document.getElementById('mTitle').textContent='场馆详情 & 预约';
   document.getElementById('mSub').textContent=`通过「${p.name}」预约`;
   document.getElementById('mName').textContent=curVenue.name;
   document.getElementById('mAddr').textContent='📍 '+curVenue.district+' · '+curVenue.addr;
+  // 对齐 shawyerpeng 字段排版：基本信息 → 价格 → 最近可订 → 详情描述 → CTA
+  const sportStr=curVenue.sports.map(s=>({tennis:'网球',pickleball:'匹克球',padel:'板式网球'}[s]||s)).join('/');
+  const facStr=['l','s','p'].map(k=>({l:'💡灯',s:'🚿淋浴',p:'🅿️停车'}[k]+(curVenue.fac[k]?'✓':'✗'))).join(' · ');
+  const distStr=userLoc?` · 距您${(venueDist(curVenue)||0).toFixed(1)}km`:'';
+  const infoHtml=`
+    <div class="m-section">
+      <div class="m-section-title">基本信息</div>
+      <div class="m-section-row"><span>🏷运动类型</span><span>${sportStr}</span></div>
+      <div class="m-section-row"><span>🏠室内外</span><span>${curVenue.indoor?'室内':'室外'}</span></div>
+      <div class="m-section-row"><span>🎾场地数</span><span>${curVenue.courts}片</span></div>
+      <div class="m-section-row"><span>🚇所属区</span><span>${curVenue.district}${distStr}</span></div>
+      <div class="m-section-row"><span>🛠设施</span><span>${facStr}</span></div>
+    </div>
+    <div class="m-section">
+      <div class="m-section-title">价格 & 可订</div>
+      <div class="m-section-row"><span>💰价格区间</span><span>¥${curVenue.pMin}-${curVenue.pMax}/h</span></div>
+      <div class="m-section-row"><span>📅最近可订</span><span>${nearestHtml(curVenue).replace(/<[^>]+>/g,'').replace('最近可订：','')}</span></div>
+      <div class="m-section-row"><span>⏰订场难度</span><span>${curVenue.diff==='easy'?'随时订':curVenue.diff==='mid'?'提前1-2天':'难抢'}</span></div>
+    </div>
+    ${curVenue.note?`<div class="m-desc"><strong>💬 场馆说明</strong>${curVenue.note}</div>`:''}`;
   let actions='';
-  // wx-open-launch-weapp 必须预埋 DOM，这里只控制显隐和属性
   const wxBtn=document.getElementById('wxLaunchBtn');
   wxBtn.style.display='none';
-
   if(curVenue.plt==='wechat'){
     actions+=aHtml('m-primary','💬','加群预约','加入对应微信群后群内抢位',"doAction('group')");
   } else if(p.appId){
     if(isWechat){
-      // 更新预埋节点的属性，然后显示
       wxBtn.setAttribute('username', p.gh||'');
       wxBtn.setAttribute('appid', p.appId);
       wxBtn.setAttribute('path', p.path||'pages/index/index');
@@ -758,7 +981,7 @@ function openBooking(id){
   }
   actions+=aHtml('','🗺','打开地图导航','腾讯地图导航到场馆',"doAction('map')");
   actions+=aHtml('','📋','复制场馆地址','复制后发给球友',"doAction('copy')");
-  document.getElementById('mActions').innerHTML=actions;
+  document.getElementById('mActions').innerHTML=infoHtml+actions;
   document.getElementById('modalBg').classList.add('open');
 }
 
@@ -819,7 +1042,8 @@ function shareApp(){
 function setNav(tab,btn){
   document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  if(tab==='map')showToast('地图视图开发中 🗺');
+  if(tab==='list'){setView('list',document.querySelector('.vt-btn'));}
+  else if(tab==='map'){setView('map',document.querySelectorAll('.vt-btn')[1]);}
 }
 
 function openFeedback(){

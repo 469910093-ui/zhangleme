@@ -1103,11 +1103,14 @@ function closeTagModal(e){
 let curVenue=null;
 const isWechat=/MicroMessenger/i.test(navigator.userAgent);
 
-// ── 微信 JS-SDK 初始化（GitHub Pages 无后端签名时静默失败，不影响展示）──
+// ── 微信 JS-SDK 初始化 ──
+// 签名服务部署在 Vercel，前端在 GitHub Pages 时用绝对 URL；同域部署时留空走相对路径 /api/wxsign
+const WX_SIGN_BASE='';  // 部署后填 Vercel 域名，如 'https://zhangleme.vercel.app'
 let wxReady=false;
 if(isWechat){
   const signUrl=location.href.split('#')[0];
-  fetch(`/api/wxsign?url=${encodeURIComponent(signUrl)}`)
+  const signApi=(WX_SIGN_BASE||'')+`/api/wxsign?url=${encodeURIComponent(signUrl)}`;
+  fetch(signApi)
     .then(r=>r.json())
     .then(cfg=>{
       if(cfg.error){console.warn('wxsign error:',cfg.error);return;}
@@ -1120,10 +1123,10 @@ if(isWechat){
         jsApiList:['openLocation'],
         openTagList:['wx-open-launch-weapp']
       });
-      wx.ready(()=>{ wxReady=true; });
+      wx.ready(()=>{ wxReady=true; console.log('wx ready, 跳转按钮可用'); });
       wx.error(e=>console.warn('wx.error:',e));
     })
-    .catch(e=>console.warn('wxsign fetch failed (静态托管无签名服务，跳转按钮将走复制名称方案):',e.message));
+    .catch(e=>console.warn('wxsign fetch failed:',e.message));
 }
 
 function openBooking(id){
@@ -1159,11 +1162,9 @@ function openBooking(id){
   if(curVenue.plt==='wechat'){
     actions+=aHtml('m-primary','💬','加群预约','加入对应微信群后群内抢位',"doAction('group')");
   } else if(p.appId){
-    // 有 appId 的平台：复制小程序名，提示去微信搜索打开（静态托管无法直接跳转，需公众号签名服务）
-    const copyTarget=p.mp||p.name;
-    actions+=aHtml('m-primary','🔍',`微信搜索「${copyTarget}」`,
-      `已复制小程序名，点击去微信搜索栏粘贴打开`,"doAction('search')");
-    // 微信内且 JS-SDK 签名成功时，额外显示 wx-open-launch-weapp（一键跳转增强，需后端签名服务）
+    // 有 appId 的平台：始终显示跳转按钮（兜底，所有环境可见）
+    actions+=aHtml('m-primary','🚀',`打开「${p.mp}」`,'点击跳转到小程序预约',"doAction('jump')");
+    // 微信内且 JS-SDK 签名成功时，额外显示 wx-open-launch-weapp（一键跳转增强）
     if(isWechat&&wxReady){
       wxBtn.setAttribute('username', p.gh||'');
       wxBtn.setAttribute('appid', p.appId);

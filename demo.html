@@ -407,7 +407,7 @@ header{
   <div class="map-legend" id="mapLegend">
     <span class="ml-item"><i class="ml-dot" style="background:#16A34A"></i>硬地</span>
     <span class="ml-item"><i class="ml-dot" style="background:#DC2626"></i>红土</span>
-    <span class="ml-item"><i class="ml-dot" style="background:#fff;border:1.5px solid #374151"></i>气模</span>
+    <span class="ml-item"><i class="ml-dot" style="background:#fff;border:1.5px solid #374151"></i>气膜</span>
   </div>
   <div class="map-info" id="mapInfo">
     <button class="map-info-close" onclick="closeMapInfo()">×</button>
@@ -597,10 +597,10 @@ const COORDS={
 V.forEach(v=>{const c=COORDS[v.id];if(c){v.lng=c[0];v.lat=c[1];}});
 // 空调字段推断：室内场默认有空调(ac:1)，室外场无(ac:0)；个别场馆可在数据里手动覆盖
 V.forEach(v=>{if(v.ac==null)v.ac=v.indoor?1:0;});
-// 场地类型 surf：clay=红土 / hard=硬地 / air=气模；默认 hard，已知红土场手动标 clay
+// 场地类型 surf：clay=红土 / hard=硬地 / air=气膜；默认 hard，已知红土场手动标 clay
 V.forEach(v=>{if(v.surf==null)v.surf='hard';});
 const SURF_COLOR={clay:'#DC2626',hard:'#16A34A',air:'#FFFFFF'};
-const SURF_LABEL={clay:'红土场',hard:'硬地场',air:'气模场'};
+const SURF_LABEL={clay:'红土场',hard:'硬地场',air:'气膜场'};
 
 // 上海主要地铁站坐标（用于地铁站筛选）
 const METROS={

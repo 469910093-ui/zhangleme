@@ -578,6 +578,8 @@ const COORDS={
   61:[121.490,31.275],62:[121.395,31.170],63:[121.390,31.245],
 };
 V.forEach(v=>{const c=COORDS[v.id];if(c){v.lng=c[0];v.lat=c[1];}});
+// 空调字段推断：室内场默认有空调(ac:1)，室外场无(ac:0)；个别场馆可在数据里手动覆盖
+V.forEach(v=>{if(v.ac==null)v.ac=v.indoor?1:0;});
 
 // 上海主要地铁站坐标（用于地铁站筛选）
 const METROS={
@@ -657,13 +659,15 @@ function saveVenueTags(id,tags){const d=getUD();d.tags[id]=tags;saveUD(d);}
 // ════════════════════════
 //  筛选状态
 // ════════════════════════
-const S={sport:'',district:'',env:'',price:'',diff:'',plt:'',fav:'',metro:'',view:'list'};
+const S={sport:'',district:'',env:'',ac:'',price:'',diff:'',plt:'',fav:'',metro:'',view:'list'};
 const FILTERS=[
   {k:'sport',opts:[['','全部'],['tennis','🎾 网球'],['pickleball','◎ 匹克球'],['padel','▬● 板式网球']]},
   null,
   {k:'district',opts:[['','全上海'],['浦东','浦东'],['徐汇','徐汇'],['长宁','长宁'],['静安','静安'],['普陀','普陀'],['闵行','闵行'],['黄浦','黄浦'],['杨浦','杨浦'],['虹口','虹口'],['松江','松江']]},
   null,
   {k:'env',opts:[['','室内外'],['indoor','🏠 室内'],['outdoor','☀️ 室外']]},
+  null,
+  {k:'ac',opts:[['','空调不限'],['1','❄️ 有空调'],['0','🌡 无空调']]},
   null,
   {k:'price',opts:[['','不限'],['low','¥80以下'],['mid','¥80-150'],['high','¥150+']]},
   null,
@@ -722,6 +726,8 @@ function getFiltered(){
     if(S.district&&v.district!==S.district)return false;
     if(S.env==='indoor'&&!v.indoor)return false;
     if(S.env==='outdoor'&&v.indoor)return false;
+    if(S.ac==='1'&&!v.ac)return false;
+    if(S.ac==='0'&&v.ac)return false;
     if(S.price==='low'&&v.pMin>=80)return false;
     if(S.price==='mid'&&(v.pMax<80||v.pMin>150))return false;
     if(S.price==='high'&&v.pMax<=150)return false;
@@ -750,7 +756,7 @@ function getFiltered(){
 // ════════════════════════
 function buildFilters(){
   // 渲染到筛选弹窗内（分维度 section）
-  const dimLabels={sport:'🎾 运动类型',district:'📍 区域',env:'🏠 室内外',price:'💰 价格',diff:'⏰ 订场难度',metro:'🚇 地铁站'};
+  const dimLabels={sport:'🎾 运动类型',district:'📍 区域',env:'🏠 室内外',ac:'❄️ 空调',price:'💰 价格',diff:'⏰ 订场难度',metro:'🚇 地铁站'};
   let h='';
   FILTERS.forEach(g=>{
     if(!g)return; // 跳过分隔符
@@ -875,6 +881,7 @@ function card(v){
       <div class="ctags">
         ${v.sports.map(s=>`<span class="tag">${sportLabel(s)}</span>`).join('')}
         <span class="tag">${v.indoor?'🏠 室内':'☀️ 室外'}</span>
+        ${v.indoor?`<span class="tag">${v.ac?'❄️ 有空调':'🌡 无空调'}</span>`:''}
         <span class="tag">🎾 ${v.courts}片</span>
       </div>
       <div class="user-tags">
@@ -972,6 +979,7 @@ function showMapInfo(v){
   document.getElementById('miRows').innerHTML=`
     <div class="m-section-row"><span>📍位置</span><span>${v.district}·${v.addr}</span></div>
     <div class="m-section-row"><span>💰价格</span><span>¥${v.pMin}-${v.pMax}/h</span></div>
+    <div class="m-section-row"><span>🏠环境</span><span>${v.indoor?'室内':'室外'}${v.indoor?(v.ac?' · ❄️有空调':' · 🌡无空调'):''}</span></div>
     <div class="m-section-row"><span>📅最近可订</span><span>${v.days==null?'暂无':v.days+'天后'}</span></div>
     <div class="m-section-row"><span>🏷平台</span><span>${p.name}</span></div>
     <button class="book-btn" style="margin-top:8px;width:100%" onclick="openBooking(${v.id})">预约 →</button>`;
@@ -1107,7 +1115,7 @@ function openBooking(id){
     <div class="m-section">
       <div class="m-section-title">基本信息</div>
       <div class="m-section-row"><span>🏷运动类型</span><span>${sportStr}</span></div>
-      <div class="m-section-row"><span>🏠室内外</span><span>${curVenue.indoor?'室内':'室外'}</span></div>
+      <div class="m-section-row"><span>🏠室内外</span><span>${curVenue.indoor?'室内':'室外'}${curVenue.indoor?(curVenue.ac?' · ❄️有空调':' · 🌡无空调'):''}</span></div>
       <div class="m-section-row"><span>🎾场地数</span><span>${curVenue.courts}片</span></div>
       <div class="m-section-row"><span>🚇所属区</span><span>${curVenue.district}${distStr}</span></div>
       <div class="m-section-row"><span>🛠设施</span><span>${facStr}</span></div>

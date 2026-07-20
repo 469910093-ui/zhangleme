@@ -914,7 +914,6 @@ function card(v){
         <div>
           <div class="cprice">¥${v.pMin}–${v.pMax}<span>/小时</span></div>
           <div style="margin-top:3px">${diffHtml(v.diff)}${distHtml(v)}</div>
-          <div style="margin-top:4px">${nearestHtml(v)}</div>
         </div>
         <button class="book-btn" onclick="openBooking(${v.id})">预约 →</button>
       </div>
@@ -1151,7 +1150,6 @@ function openBooking(id){
     <div class="m-section">
       <div class="m-section-title">价格 & 可订</div>
       <div class="m-section-row"><span>💰价格区间</span><span>¥${curVenue.pMin}-${curVenue.pMax}/h</span></div>
-      <div class="m-section-row"><span>📅最近可订</span><span>${nearestHtml(curVenue).replace(/<[^>]+>/g,'').replace('最近可订：','')}</span></div>
       <div class="m-section-row"><span>⏰订场难度</span><span>${curVenue.diff==='easy'?'随时订':curVenue.diff==='mid'?'提前1-2天':'难抢'}</span></div>
     </div>
     ${curVenue.note?`<div class="m-desc"><strong>💬 场馆说明</strong>${curVenue.note}</div>`:''}`;

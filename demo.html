@@ -246,6 +246,45 @@ header{
   pointer-events:none;z-index:999;white-space:nowrap;
 }
 .toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+/* === 筛选弹窗 === */
+.filter-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:550;align-items:flex-end;justify-content:center}
+.filter-modal.open{display:flex}
+.filter-panel{
+  background:#fff;border-radius:20px 20px 0 0;
+  width:100%;max-width:600px;
+  padding:20px 20px calc(20px + var(--safe-bottom));
+  animation:slideUp .25s ease;max-height:85vh;overflow-y:auto;
+}
+.filter-section{margin-bottom:18px}
+.filter-section-title{
+  font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;
+  display:flex;align-items:center;gap:6px;
+}
+.filter-section-title .cnt{
+  font-size:11px;font-weight:400;color:var(--muted);background:var(--surface);
+  padding:1px 7px;border-radius:10px;
+}
+.filter-chips{display:flex;flex-wrap:wrap;gap:8px}
+.filter-chips .chip{min-height:34px;padding:6px 14px}
+.filter-footer{
+  display:flex;gap:10px;position:sticky;bottom:0;
+  background:#fff;padding:12px 0 0;margin-top:8px;
+  border-top:1px solid var(--border);
+}
+.filter-footer button{flex:1;padding:13px;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;border:none}
+.ff-reset{background:var(--surface);color:var(--text)}
+.ff-apply{background:var(--green);color:#fff}
+.filter-entry-btn{
+  background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);
+  border-radius:8px;padding:7px 11px;color:#fff;font-size:12px;
+  cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px;
+}
+.filter-entry-btn:active{background:rgba(255,255,255,.3)}
+.filter-entry-btn .badge{
+  background:#FF385C;color:#fff;font-size:10px;
+  min-width:16px;height:16px;border-radius:8px;
+  display:inline-flex;align-items:center;justify-content:center;padding:0 4px;
+}
 /* === 地图视图 === */
 .map-view{display:none;position:fixed;top:calc(var(--header-h,80px) + 50px);left:0;right:0;bottom:calc(60px + var(--safe-bottom));z-index:100}
 .map-view.on{display:block}
@@ -315,6 +354,9 @@ header{
         oninput="onSearch(this.value)">
     </div>
     <div class="hd-actions">
+      <button class="filter-entry-btn" id="filterEntryBtn" onclick="openFilterModal()">
+        🔍 筛选<span id="filterBadge" style="display:none" class="badge">0</span>
+      </button>
       <button class="hd-btn" id="locBtn" onclick="getUserLocation()" title="获取定位">📍 定位</button>
       <button class="hd-btn" onclick="shareApp()">📤</button>
     </div>
@@ -322,7 +364,7 @@ header{
   <div class="hd-stats" id="statsBar">加载中…</div>
 </header>
 
-<div class="filter-wrap" id="filterWrap">
+<div class="filter-wrap" id="filterWrap" style="display:none">
   <div class="filter-scroll" id="filterRow"></div>
 </div>
 
@@ -413,6 +455,19 @@ header{
       <button class="tag-add-btn" onclick="addCustomTag()">添加</button>
     </div>
     <button class="tag-done-btn" onclick="closeTagModal()">完成</button>
+  </div>
+</div>
+
+<!-- 筛选弹窗 -->
+<div class="filter-modal" id="filterModal" onclick="closeFilterModal(event)">
+  <div class="filter-panel" id="filterPanel">
+    <div class="modal-handle"></div>
+    <div class="tag-panel-title">筛选场馆</div>
+    <div id="filterPanelBody"></div>
+    <div class="filter-footer">
+      <button class="ff-reset" onclick="resetFilters()">重置</button>
+      <button class="ff-apply" id="filterApplyBtn" onclick="closeFilterModal()">查看 N 个场馆</button>
+    </div>
   </div>
 </div>
 
@@ -656,22 +711,56 @@ function getFiltered(){
 //  渲染
 // ════════════════════════
 function buildFilters(){
+  // 渲染到筛选弹窗内（分维度 section）
+  const dimLabels={sport:'运动类型',district:'区域',env:'室内外',price:'价格',diff:'订场难度',metro:'地铁站'};
   let h='';
   FILTERS.forEach(g=>{
-    if(!g){h+='<div class="fsep"></div>';return;}
-    h+='<div class="fgrp">';
+    if(!g)return; // 跳过分隔符
+    const sel=S[g.k];
+    const cnt=sel?`<span class="cnt">已选: ${typeof sel==='string'&&sel?sel:''}</span>`:'';
+    h+=`<div class="filter-section">
+      <div class="filter-section-title">${dimLabels[g.k]||g.k}${cnt}</div>
+      <div class="filter-chips">`;
     g.opts.forEach(([v,l])=>{
       h+=`<button class="chip${S[g.k]===v?' on':''}" onclick="setF('${g.k}','${v}')">${l}</button>`;
     });
-    h+='</div>';
+    h+=`</div></div>`;
   });
-  document.getElementById('filterRow').innerHTML=h;
+  document.getElementById('filterPanelBody').innerHTML=h;
+  // 更新底部应用按钮文案
+  const cnt=getFiltered().length;
+  document.getElementById('filterApplyBtn').textContent=`查看 ${cnt} 个场馆`;
+}
+
+function openFilterModal(){
+  buildFilters();
+  document.getElementById('filterModal').classList.add('open');
+  track('filter_modal_open',{});
+}
+function closeFilterModal(e){
+  if(e&&e.target!==document.getElementById('filterModal'))return;
+  document.getElementById('filterModal').classList.remove('open');
+}
+function resetFilters(){
+  Object.keys(S).forEach(k=>{if(k!=='view'&&k!=='fav')S[k]='';});
+  track('filter_reset',{});
+  render();
+  buildFilters();
+}
+function updateFilterBadge(){
+  const n=Object.keys(S).filter(k=>k!=='view'&&k!=='fav'&&S[k]).length;
+  const b=document.getElementById('filterBadge'),btn=document.getElementById('filterEntryBtn');
+  if(n>0){b.style.display='inline-flex';b.textContent=n;}
+  else{b.style.display='none';}
 }
 
 function setF(k,v){
-  // 埋点 filter 变更
   if(S[k]!==v)track('filter',{key:k,val:v});
   S[k]=v;render();
+  // 若筛选弹窗打开，实时刷新弹窗内 chip 高亮 + 应用按钮文案
+  if(document.getElementById('filterModal').classList.contains('open')){
+    buildFilters();
+  }
 }
 
 function sportLabel(s){
@@ -775,6 +864,8 @@ function render(){
   // 更新收藏底部按钮状态
   const fbn=document.getElementById('favNavBtn');
   if(fbn)fbn.classList.toggle('active',S.fav);
+  // 更新筛选入口 badge
+  updateFilterBadge();
   // 地图视图
   if(S.view==='map')renderMap(filtered);
 }

@@ -849,14 +849,19 @@ function render(){
   document.getElementById('statsBar').textContent=
     `${V.length}个场馆 · ${Object.keys(PLT).length}个平台${favCount>0?' · ❤️'+favCount+'个收藏':''}${userLoc?' · 📍已定位':''}`;
   document.getElementById('resCount').textContent=`筛选结果：${filtered.length} 个场馆`;
-  // gap
-  const gapItems=GAPS.map(g=>`<span style="display:block">· ${g}</span>`).join('');
-  document.getElementById('gapDiv').innerHTML=`
-    <div class="gap-box">
-      <strong>📋 数据缺口（${GAPS.length}项）</strong>
-      <div id="gapItems" style="${gapOpen?'':'display:none'}">${gapItems}</div>
-      <button class="gap-toggle" onclick="gapOpen=!gapOpen;render()">${gapOpen?'▲ 收起':'▼ 展开'}</button>
-    </div>`;
+  // gap（仅 ?admin=1 时显示，避免分享给用户时露出内部数据缺口）
+  const isAdmin=new URLSearchParams(location.search).get('admin')==='1';
+  if(isAdmin){
+    const gapItems=GAPS.map(g=>`<span style="display:block">· ${g}</span>`).join('');
+    document.getElementById('gapDiv').innerHTML=`
+      <div class="gap-box">
+        <strong>📋 数据缺口（${GAPS.length}项）</strong>
+        <div id="gapItems" style="${gapOpen?'':'display:none'}">${gapItems}</div>
+        <button class="gap-toggle" onclick="gapOpen=!gapOpen;render()">${gapOpen?'▲ 收起':'▼ 展开'}</button>
+      </div>`;
+  }else{
+    document.getElementById('gapDiv').innerHTML='';
+  }
   document.getElementById('vgrid').innerHTML=filtered.length
     ?filtered.map(card).join('')
     :`<div class="empty"><div class="empty-ico">🎾</div><div>没有符合条件的场馆</div></div>`;

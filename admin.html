@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>强了么后台 · 数据分析</title>
+<title>涨了么后台 · 数据分析</title>
 <style>
 :root{
   --green:#1A7A4A;--green2:#52B788;--surface:#F2F5F2;
@@ -131,7 +131,7 @@ tr:hover td{background:#FAFAF7}
 <!-- 登录页 -->
 <div id="loginPage">
   <div class="login-box">
-    <div class="login-logo">🎾 强了么后台</div>
+    <div class="login-logo">🎾 涨了么后台</div>
     <div class="login-sub">数据分析 & 运营工作台</div>
     <input class="login-inp" id="pwdInput" type="password" placeholder="访问密码" maxlength="20"
       onkeydown="if(event.key==='Enter')login()">
@@ -143,7 +143,7 @@ tr:hover td{background:#FAFAF7}
 <!-- 主界面 -->
 <div id="adminPage">
   <header>
-    <div class="h-logo">🎾 强了么 · 运营后台</div>
+    <div class="h-logo">🎾 涨了么 · 运营后台</div>
     <div class="h-actions">
       <button class="h-btn" onclick="refresh()">🔄 刷新</button>
       <button class="h-btn" onclick="exportCSV()">📥 导出CSV</button>
@@ -247,14 +247,14 @@ if(sessionStorage.getItem('admin_auth')==='1'){
 //  数据读取
 // ═══════════════════
 function getEvents(){
-  return JSON.parse(localStorage.getItem('qiangle_events')||'[]');
+  return JSON.parse(localStorage.getItem('zhang_events')||'[]');
 }
 function getUserData(){
-  return JSON.parse(localStorage.getItem('qiangle_user')||'{"favs":[],"tags":{}}');
+  return JSON.parse(localStorage.getItem('zhang_user')||'{"favs":[],"tags":{}}');
 }
 function getVenueNames(){
   // 在 admin 页无法直接访问 demo.html 的 V 数组，用本地缓存
-  const cached=localStorage.getItem('qiangle_venue_names');
+  const cached=localStorage.getItem('zhang_venue_names');
   if(cached)return JSON.parse(cached);
   return {};
 }
@@ -527,7 +527,7 @@ function exportCSV(){
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url;
-  a.download=`qiangle_data_${new Date().toISOString().slice(0,10)}.csv`;
+  a.download=`zhang_data_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
   showToast(`已导出 ${events.length} 条事件`);
@@ -535,7 +535,7 @@ function exportCSV(){
 
 function clearData(){
   if(!confirm('确认清空所有埋点数据？此操作不可恢复。'))return;
-  localStorage.removeItem('qiangle_events');
+  localStorage.removeItem('zhang_events');
   showToast('数据已清空');
   refresh();
 }

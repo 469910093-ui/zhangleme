@@ -1,4 +1,4 @@
-# 强了么 Day 1 技术规格文档
+# 涨了么 Day 1 技术规格文档
 
 **版本:** v1.0  
 **日期:** 2026-07-06  
@@ -286,7 +286,7 @@ export default {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>强了么 - 找场馆</title>
+  <title>涨了么 - 找场馆</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f5f5; }
@@ -342,7 +342,7 @@ export default {
 </head>
 <body>
   <div class="container">
-    <h1 style="text-align: center; margin-bottom: 30px;">⚾ 强了么 - 找场馆</h1>
+    <h1 style="text-align: center; margin-bottom: 30px;">⚾ 涨了么 - 找场馆</h1>
 
     <div class="search-section">
       <h2>🔍 查询可用场馆</h2>

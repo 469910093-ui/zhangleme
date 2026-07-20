@@ -1,4 +1,4 @@
-# 强了么场馆主后台方案
+# 涨了么场馆主后台方案
 
 **版本:** v1.0  
 **目标:** 30 秒内完成排期设置，激励场馆主持续更新
@@ -7,7 +7,7 @@
 
 ## 一、场馆主后台 H5 完整代码
 
-**URL:** `https://admin.qiangle.me/venue-schedule`
+**URL:** `https://admin.zhang.me/venue-schedule`
 
 ```html
 <!DOCTYPE html>
@@ -15,7 +15,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>强了么 - 场馆主排期管理</title>
+  <title>涨了么 - 场馆主排期管理</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
@@ -545,7 +545,7 @@ export async function scheduledDailyReminder(event, env, ctx) {
   const message = {
     msgtype: 'text',
     text: {
-      content: `📢 排期提醒\n\n浦东网球中心，明天 (${dateStr}) 有 ${schedules.slot_count} 个时段有空位！\n\n赶紧打开后台更新排期吧 🚀\n\nhttps://admin.qiangle.me/venue-schedule`,
+      content: `📢 排期提醒\n\n浦东网球中心，明天 (${dateStr}) 有 ${schedules.slot_count} 个时段有空位！\n\n赶紧打开后台更新排期吧 🚀\n\nhttps://admin.zhang.me/venue-schedule`,
       mentioned_user_list: [owner.wechat_user_id]
     }
   };

@@ -292,14 +292,26 @@ header{
 #map{width:100%;height:100%;background:#E5E7EB}
 .map-info{
   position:absolute;left:14px;right:14px;bottom:14px;
-  background:#fff;border-radius:12px;padding:12px 14px;
-  box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:1000;
-  display:none;max-height:140px;overflow-y:auto;
+  background:#fff;border-radius:14px;padding:14px 16px;
+  box-shadow:0 4px 20px rgba(0,0,0,.18);z-index:1000;
+  display:none;max-height:300px;overflow-y:auto;
 }
 .map-info.on{display:block}
-.map-info-name{font-size:15px;font-weight:600;margin-bottom:4px}
-.map-info-row{font-size:12px;color:var(--muted);line-height:1.6}
+.map-info-name{font-size:16px;font-weight:700;margin-bottom:8px;padding-right:24px;line-height:1.3}
+.map-info-row{font-size:12px;color:var(--muted);line-height:1.7}
 .map-info-row b{color:var(--text);font-weight:500}
+.map-info .m-section-row{display:flex;justify-content:space-between;padding:3px 0;font-size:13px}
+.map-info .m-section-row span:first-child{color:var(--muted);flex-shrink:0}
+.map-info .m-section-row span:last-child{color:var(--text);text-align:right;max-width:65%}
+.map-info .book-btn{margin-top:12px;width:100%;padding:12px;font-size:15px;font-weight:600}
+.map-legend{
+  position:absolute;left:14px;top:14px;z-index:1000;
+  background:rgba(255,255,255,.92);border-radius:8px;padding:7px 11px;
+  box-shadow:0 2px 8px rgba(0,0,0,.12);
+  display:flex;gap:14px;font-size:12px;color:var(--text);font-weight:500;
+}
+.ml-item{display:flex;align-items:center;gap:4px}
+.ml-dot{width:11px;height:11px;border-radius:50%;display:inline-block}
 .map-info-close{
   position:absolute;top:8px;right:10px;background:none;border:none;
   font-size:18px;color:var(--muted);cursor:pointer;line-height:1;
@@ -392,6 +404,11 @@ header{
 
 <div class="map-view" id="mapView">
   <div id="map"></div>
+  <div class="map-legend" id="mapLegend">
+    <span class="ml-item"><i class="ml-dot" style="background:#16A34A"></i>硬地</span>
+    <span class="ml-item"><i class="ml-dot" style="background:#DC2626"></i>红土</span>
+    <span class="ml-item"><i class="ml-dot" style="background:#fff;border:1.5px solid #374151"></i>气模</span>
+  </div>
   <div class="map-info" id="mapInfo">
     <button class="map-info-close" onclick="closeMapInfo()">×</button>
     <div class="map-info-name" id="miName"></div>
@@ -547,7 +564,7 @@ const V=[
 {id:49,name:'瑞趣网球俱乐部·南站店',district:'徐汇',addr:'徐汇区石龙路730号',sports:['tennis'],indoor:true,pMin:80,pMax:180,courts:3,fac:{l:1,s:1,p:1},plt:'self',days:1,diff:'easy',note:'上海南站附近',q:'partial'},
 {id:50,name:'瑞趣网球俱乐部·悠方城店',district:'杨浦',addr:'杨浦区殷行路1388号R6栋L4层（楼顶）',sports:['tennis'],indoor:false,pMin:100,pMax:200,courts:3,fac:{l:1,s:0,p:1},plt:'self',days:1,diff:'easy',note:'楼顶室外场，悠方城商场',q:'partial'},
 {id:51,name:'国际网球中心',district:'徐汇',addr:'徐汇区衡山路516号富豪环球东亚酒店内',sports:['tennis'],indoor:false,pMin:300,pMax:650,courts:10,fac:{l:1,s:1,p:1},plt:'self',days:2,diff:'hard',note:'富豪环球东亚酒店附属，高端会员制，8室外+2室内，需提前24-48h电话预约021-64155588',q:'partial'},
-{id:52,name:'仙霞网球中心',district:'长宁',addr:'长宁区虹桥路1885号(近虹许路)',sports:['tennis'],indoor:false,pMin:80,pMax:350,courts:9,fac:{l:1,s:1,p:1},plt:'jushi',days:1,diff:'hard',note:'8室外+1中央可开合屋顶，室内硬地180/280，红土350，久事体育小程序预约，红土场周五10点秒抢',q:'partial'},
+{id:52,name:'仙霞网球中心',district:'长宁',addr:'长宁区虹桥路1885号(近虹许路)',sports:['tennis'],indoor:false,pMin:80,pMax:350,courts:9,fac:{l:1,s:1,p:1},plt:'jushi',days:1,diff:'hard',surf:'clay',note:'8室外+1中央可开合屋顶，室内硬地180/280，红土350，久事体育小程序预约，红土场周五10点秒抢',q:'partial'},
 {id:53,name:'古北网球馆（待核实）',district:'长宁',addr:'长宁区虹许路附近(地址待核实)',sports:['tennis'],indoor:true,pMin:100,pMax:200,courts:3,fac:{l:1,s:1,p:0},plt:'self',days:1,diff:'mid',note:'原录入"上海网球俱乐部虹许路550号"未搜到，疑为古北区域网球馆，待实地核实',q:'partial'},
 {id:54,name:'徐家汇体育公园·网球场',district:'徐汇',addr:'徐汇区漕溪北路徐家汇体育公园内(万体汇)',sports:['tennis'],indoor:false,pMin:120,pMax:260,courts:7,fac:{l:1,s:1,p:1},plt:'jushi',days:1,diff:'hard',note:'万体汇，3室内+4室外，8-22点，久事体育小程序，中午12点放号，室内场黄牛多异常订单54%',q:'partial'},
 {id:55,name:'中山公园网球场',district:'长宁',addr:'长宁区万航渡路1899号中山公园内',sports:['tennis'],indoor:false,pMin:50,pMax:100,courts:2,fac:{l:1,s:0,p:0},plt:'self',days:1,diff:'easy',note:'公园内公共场，价格亲民',q:'partial'},
@@ -580,6 +597,10 @@ const COORDS={
 V.forEach(v=>{const c=COORDS[v.id];if(c){v.lng=c[0];v.lat=c[1];}});
 // 空调字段推断：室内场默认有空调(ac:1)，室外场无(ac:0)；个别场馆可在数据里手动覆盖
 V.forEach(v=>{if(v.ac==null)v.ac=v.indoor?1:0;});
+// 场地类型 surf：clay=红土 / hard=硬地 / air=气模；默认 hard，已知红土场手动标 clay
+V.forEach(v=>{if(v.surf==null)v.surf='hard';});
+const SURF_COLOR={clay:'#DC2626',hard:'#16A34A',air:'#FFFFFF'};
+const SURF_LABEL={clay:'红土场',hard:'硬地场',air:'气模场'};
 
 // 上海主要地铁站坐标（用于地铁站筛选）
 const METROS={
@@ -958,10 +979,11 @@ function renderMap(filtered){
   const bounds=[];
   filtered.forEach(v=>{
     if(!v.lat||!v.lng)return;
-    const p=PLT[v.plt];
+    const sc=SURF_COLOR[v.surf]||SURF_COLOR.hard;
+    const isAir=v.surf==='air';
     const mk=L.circleMarker([v.lat,v.lng],{
-      radius:9,color:p.pin,fillColor:p.pin,fillOpacity:.9,weight:2
-    }).bindPopup(`<b>${v.name}</b><br>📍${v.district}·${v.addr}<br>¥${v.pMin}-${v.pMax}/h`);
+      radius:9,color:isAir?'#374151':sc,fillColor:sc,fillOpacity:.95,weight:isAir?2:1.5
+    }).bindPopup(`<b>${v.name}</b><br>📍${v.district}·${v.addr}<br>¥${v.pMin}-${v.pMax}/h · ${SURF_LABEL[v.surf]||'硬地'}`);
     mk.on('click',()=>showMapInfo(v));
     mk.addTo(map);
     mapMarkers[v.id]=mk;
@@ -975,14 +997,20 @@ function renderMap(filtered){
 
 function showMapInfo(v){
   const p=PLT[v.plt];
+  const sportStr=v.sports.map(s=>({tennis:'网球',pickleball:'匹克球',padel:'板式网球'}[s]||s)).join('/');
+  const facStr=['l','s','p'].map(k=>({l:'💡灯',s:'🚿淋浴',p:'🅿️停车'}[k]+(v.fac[k]?'✓':'✗'))).join(' · ');
+  const diffStr=v.diff==='easy'?'✅ 随时订':v.diff==='mid'?'⏰ 提前1-2天':'🔥 难抢';
   document.getElementById('miName').textContent=v.name;
   document.getElementById('miRows').innerHTML=`
     <div class="m-section-row"><span>📍位置</span><span>${v.district}·${v.addr}</span></div>
     <div class="m-section-row"><span>💰价格</span><span>¥${v.pMin}-${v.pMax}/h</span></div>
+    <div class="m-section-row"><span>🎾场地</span><span>${sportStr} · ${v.courts}片 · ${SURF_LABEL[v.surf]||'硬地'}</span></div>
     <div class="m-section-row"><span>🏠环境</span><span>${v.indoor?'室内':'室外'}${v.indoor?(v.ac?' · ❄️有空调':' · 🌡无空调'):''}</span></div>
-    <div class="m-section-row"><span>📅最近可订</span><span>${v.days==null?'暂无':v.days+'天后'}</span></div>
+    <div class="m-section-row"><span>⏰难度</span><span>${diffStr}</span></div>
+    <div class="m-section-row"><span>🛠设施</span><span>${facStr}</span></div>
     <div class="m-section-row"><span>🏷平台</span><span>${p.name}</span></div>
-    <button class="book-btn" style="margin-top:8px;width:100%" onclick="openBooking(${v.id})">预约 →</button>`;
+    ${v.note?`<div style="font-size:12px;color:var(--muted);line-height:1.5;margin-top:6px;padding:6px 8px;background:var(--surface);border-radius:6px">💬 ${v.note}</div>`:''}
+    <button class="book-btn" onclick="openBooking(${v.id})">预约 →</button>`;
   document.getElementById('mapInfo').classList.add('on');
 }
 function closeMapInfo(){document.getElementById('mapInfo').classList.remove('on');}
